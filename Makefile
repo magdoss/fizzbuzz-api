@@ -2,6 +2,7 @@
 
 COMPOSE := docker compose
 COMPOSE_DEV := docker compose -f compose.yaml -f compose.dev.yaml
+PHP := $(COMPOSE_DEV) run --rm --no-deps php
 TRIVY := docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v trivy-cache:/root/.cache/ aquasec/trivy:0.74.0
 export UID := $(shell id -u)
 export GID := $(shell id -g)
@@ -24,6 +25,22 @@ logs: ## Follow the logs of all services
 sh: ## Open a shell in the dev php container
 	$(COMPOSE_DEV) exec php sh
 
+install: ## Install composer dependencies in the dev container
+	$(PHP) composer install --no-interaction --no-progress
+
+vendor/autoload.php: composer.lock
+	$(MAKE) install
+
+lint: vendor/autoload.php ## Check coding standard and run static analysis
+	$(PHP) vendor/bin/php-cs-fixer check --diff
+	$(PHP) sh -c 'bin/console cache:warmup --quiet && vendor/bin/phpstan analyse --no-progress --memory-limit=512M'
+
+fix: vendor/autoload.php ## Fix coding standard violations
+	$(PHP) vendor/bin/php-cs-fixer fix
+
+test: vendor/autoload.php ## Run the test suite
+	$(PHP) vendor/bin/phpunit
+
 build-prod: ## Build the production image as fizzbuzz-api:local
 	docker build --target prod -t fizzbuzz-api:local .
 
@@ -33,4 +50,4 @@ audit: build-prod ## Scan the three images for HIGH and CRITICAL vulnerabilities
 		$(TRIVY) image --quiet --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --skip-files usr/local/bin/gosu $$image || exit 1; \
 	done
 
-.PHONY: help up dev down logs sh build-prod audit
+.PHONY: help up dev down logs sh install lint fix test build-prod audit
