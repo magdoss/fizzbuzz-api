@@ -8,6 +8,7 @@ services:
       APP_ENV: dev
     volumes:
       - .:/app
+    tmpfs: !reset []
     read_only: false
 
   db:
