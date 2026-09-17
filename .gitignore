@@ -1,0 +1,10 @@
+/vendor/
+/var/
+.env.local
+.env.*.local
+.php-cs-fixer.cache
+.phpunit.cache/
+.idea/
+.vscode/
+.omc/
+.claude/
