@@ -1,0 +1,13 @@
+.git
+.github
+.omc
+.claude
+var
+vendor
+tests
+docs
+compose*.yaml
+Makefile
+README.md
+.env.local
+.env.*.local
