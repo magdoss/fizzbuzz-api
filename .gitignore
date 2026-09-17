@@ -1,10 +1,19 @@
-/vendor/
+
+###> symfony/framework-bundle ###
+/.env.local
+/.env.local.php
+/.env.*.local
+/config/secrets/prod/prod.decrypt.private.php
+/public/bundles/
 /var/
-.env.local
-.env.*.local
+/vendor/
+###< symfony/framework-bundle ###
+
+###> local tooling ###
 .php-cs-fixer.cache
 .phpunit.cache/
 .idea/
 .vscode/
 .omc/
 .claude/
+###< local tooling ###
