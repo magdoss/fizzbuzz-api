@@ -1,5 +1,6 @@
 services:
   php:
+    container_name: fizzbuzz-${STACK:-prod}-php
     build:
       context: .
       target: prod
@@ -23,17 +24,20 @@ services:
     security_opt: [no-new-privileges:true]
     mem_limit: 256m
     pids_limit: 128
+    stop_grace_period: 35s
     depends_on:
       db:
         condition: service_healthy
 
   nginx:
+    container_name: fizzbuzz-${STACK:-prod}-nginx
     image: nginx:1.30.5-alpine-slim@sha256:f56e56413ea294b1532917c0b36fc676725f0af2ac766989f06f4b69cf83b12b
     user: "101:101"
     ports:
       - "${HTTP_PORT:-8080}:8080"
     volumes:
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/limits.conf:/etc/nginx/limits.conf:ro
     read_only: true
     tmpfs:
       - /tmp
@@ -41,6 +45,7 @@ services:
     security_opt: [no-new-privileges:true]
     mem_limit: 64m
     pids_limit: 64
+    stop_grace_period: 35s
     depends_on:
       - php
     healthcheck:
@@ -51,6 +56,7 @@ services:
       start_period: 15s
 
   db:
+    container_name: fizzbuzz-${STACK:-prod}-db
     image: mariadb:11.8.9@sha256:8b5f33ebd85d1775657e974ed10434128bb493c80e826ceaa54074fd1a92a112
     user: "999:999"
     environment:
