@@ -7,10 +7,17 @@ services:
     environment:
       APP_ENV: prod
       APP_SECRET: ${APP_SECRET:-dev-only-secret-change-me}
+      FIZZBUZZ_MAX_LIMIT: ${FIZZBUZZ_MAX_LIMIT:-100000}
     read_only: true
     tmpfs:
       - /tmp
-      - /app/var/log
+    volumes:
+      - type: tmpfs
+        target: /app/var/log
+        tmpfs: { mode: 01777 }
+      - type: tmpfs
+        target: /app/var/cache/prod/pools
+        tmpfs: { mode: 01777 }
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     mem_limit: 256m

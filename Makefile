@@ -3,6 +3,8 @@
 COMPOSE := docker compose
 COMPOSE_DEV := docker compose -f compose.yaml -f compose.dev.yaml
 PHP := $(COMPOSE_DEV) run --rm --no-deps php
+NGINX_IMAGE := nginx@sha256:f56e56413ea294b1532917c0b36fc676725f0af2ac766989f06f4b69cf83b12b
+MARIADB_IMAGE := mariadb@sha256:8b5f33ebd85d1775657e974ed10434128bb493c80e826ceaa54074fd1a92a112
 TRIVY := docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v trivy-cache:/root/.cache/ aquasec/trivy:0.74.0
 export UID := $(shell id -u)
 export GID := $(shell id -g)
@@ -45,7 +47,7 @@ build-prod: ## Build the production image as fizzbuzz-api:local
 	docker build --target prod -t fizzbuzz-api:local .
 
 audit: build-prod ## Scan the three images for HIGH and CRITICAL vulnerabilities
-	@for image in fizzbuzz-api:local nginx:1.30.5-alpine-slim mariadb:11.8.9; do \
+	@for image in fizzbuzz-api:local $(NGINX_IMAGE) $(MARIADB_IMAGE); do \
 		echo "== $$image"; \
 		$(TRIVY) image --quiet --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --skip-files usr/local/bin/gosu $$image || exit 1; \
 	done
