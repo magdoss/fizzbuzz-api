@@ -6,7 +6,7 @@ services:
     user: "${UID:-1000}:${GID:-1000}"
     environment:
       APP_ENV: dev
-    volumes:
+    volumes: !override
       - .:/app
     tmpfs: !reset []
     read_only: false
