@@ -5,6 +5,7 @@ COMPOSE_DEV := docker compose -f compose.yaml -f compose.dev.yaml
 PHP := $(COMPOSE_DEV) run --rm --no-deps php
 NGINX_IMAGE := nginx@sha256:f56e56413ea294b1532917c0b36fc676725f0af2ac766989f06f4b69cf83b12b
 MARIADB_IMAGE := mariadb@sha256:8b5f33ebd85d1775657e974ed10434128bb493c80e826ceaa54074fd1a92a112
+K6 := docker run --rm --network host -v $(CURDIR)/tests/load:/scripts:ro grafana/k6:2.2.0
 TRIVY := docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v trivy-cache:/root/.cache/ aquasec/trivy:0.74.0
 export UID := $(shell id -u)
 export GID := $(shell id -g)
@@ -48,6 +49,13 @@ test: vendor/autoload.php ## Migrate the test database and run the test suite
 	$(COMPOSE_DEV) up -d --wait db
 	$(PHP) sh -c 'bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration --env=test && vendor/bin/phpunit'
 
+load-test: ## Measure capacity with the per-address limits lifted (LIMIT, VUS, DURATION), then run `make up`
+	$(COMPOSE) -f compose.yaml -f compose.loadtest.yaml up -d --build --wait
+	$(K6) run -e LIMIT=$(or $(LIMIT),100) -e VUS=$(or $(VUS),50) -e DURATION=$(or $(DURATION),30s) /scripts/fizzbuzz.js
+
+load-test-limited: up ## Same traffic against the real limits: most requests must be answered 429
+	$(K6) run -e LIMIT=$(or $(LIMIT),100) -e VUS=$(or $(VUS),50) -e DURATION=$(or $(DURATION),30s) /scripts/fizzbuzz.js
+
 build-prod: ## Build the production image as fizzbuzz-api:local
 	docker build --target prod -t fizzbuzz-api:local .
 
@@ -57,4 +65,4 @@ audit: build-prod ## Scan the three images for HIGH and CRITICAL vulnerabilities
 		$(TRIVY) image --quiet --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --skip-files usr/local/bin/gosu $$image || exit 1; \
 	done
 
-.PHONY: help up dev down migrate logs sh install lint fix test build-prod audit
+.PHONY: help up dev down migrate logs sh install lint fix test load-test load-test-limited build-prod audit
