@@ -10,6 +10,11 @@ TRIVY := docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v trivy-c
 export UID := $(shell id -u)
 export GID := $(shell id -g)
 
+# STACK names the containers after what is running: fizzbuzz-prod-php, fizzbuzz-dev-php, fizzbuzz-loadtest-php
+up migrate: export STACK := prod
+dev sh install lint fix test: export STACK := dev
+load-test: export STACK := loadtest
+
 help: ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
 
