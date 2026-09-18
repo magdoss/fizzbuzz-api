@@ -8,6 +8,7 @@ services:
       APP_ENV: prod
       APP_SECRET: ${APP_SECRET:-dev-only-secret-change-me}
       FIZZBUZZ_MAX_LIMIT: ${FIZZBUZZ_MAX_LIMIT:-100000}
+      DATABASE_URL: mysql://app:${MARIADB_PASSWORD:-app}@db:3306/fizzbuzz?serverVersion=11.8.9-MariaDB&charset=utf8mb4
     read_only: true
     tmpfs:
       - /tmp
