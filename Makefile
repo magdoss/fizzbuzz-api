@@ -12,14 +12,18 @@ export GID := $(shell id -g)
 help: ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
 
-up: ## Build and start the production-shaped stack
+up: ## Build and start the production-shaped stack, then apply the migrations
 	$(COMPOSE) up -d --build --wait
+	$(MAKE) migrate
 
 dev: ## Start the stack with the source mounted (APP_ENV=dev)
 	$(COMPOSE_DEV) up -d --build --wait
 
 down: ## Stop the stack, keep the database volume
 	$(COMPOSE_DEV) down --remove-orphans
+
+migrate: ## Apply the database migrations with the production image
+	$(COMPOSE) run --rm php php -d mysqlnd.net_read_timeout=3600 bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
 
 logs: ## Follow the logs of all services
 	$(COMPOSE) logs -f --tail=100
@@ -40,8 +44,9 @@ lint: vendor/autoload.php ## Check coding standard and run static analysis
 fix: vendor/autoload.php ## Fix coding standard violations
 	$(PHP) vendor/bin/php-cs-fixer fix
 
-test: vendor/autoload.php ## Run the test suite
-	$(PHP) vendor/bin/phpunit
+test: vendor/autoload.php ## Migrate the test database and run the test suite
+	$(COMPOSE_DEV) up -d --wait db
+	$(PHP) sh -c 'bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration --env=test && vendor/bin/phpunit'
 
 build-prod: ## Build the production image as fizzbuzz-api:local
 	docker build --target prod -t fizzbuzz-api:local .
@@ -52,4 +57,4 @@ audit: build-prod ## Scan the three images for HIGH and CRITICAL vulnerabilities
 		$(TRIVY) image --quiet --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --skip-files usr/local/bin/gosu $$image || exit 1; \
 	done
 
-.PHONY: help up dev down logs sh install lint fix test build-prod audit
+.PHONY: help up dev down migrate logs sh install lint fix test build-prod audit
