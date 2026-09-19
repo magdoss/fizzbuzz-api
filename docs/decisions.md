@@ -16,6 +16,7 @@ Chaque choix cite ce qui a été écarté, et le chiffre qui a tranché.
 | Compteur par UPSERT, une seule instruction SQL | l'ORM : lire, `+1`, écrire | 8 000 comptés sur 8 000, contre 974 |
 | Empreinte du JSON des cinq valeurs | coller les valeurs bout à bout | un séparateur peut être tapé par l'utilisateur : `str1="a\|b", str2="c"` et `str1="a", str2="b\|c"` donneraient la même empreinte |
 | `id` en `BIGINT` | `INT` | l'UPSERT réserve un `id` à chaque appel, même sans nouvelle ligne. En `INT`, le compteur serait épuisé après 4,29 milliards d'appels |
+| Fonctions dangereuses bloquées à deux niveaux : PHPStan et `disable_functions` | un seul des deux | PHPStan ne lit pas `vendor/`, et PHP ne sait pas désactiver `eval`. La règle est tenue par l'outil, pas par la vigilance du relecteur |
 | Limite de débit dans nginx | composant RateLimiter de Symfony | 429 en 4 ms, PHP n'est pas réveillé |
 | Erreurs courtes : champ et message | format complet de Symfony | ce qu'il faut pour corriger sa requête, rien de plus |
 | Symfony 7.4 LTS, PHP 8.4, MariaDB 11.8 LTS | Symfony 8.1, PHP 8.5 | des versions maintenues plusieurs années : sécurité jusqu'en 2029, 2028 et 2028 |
