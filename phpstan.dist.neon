@@ -3,6 +3,10 @@ includes:
     - vendor/phpstan/phpstan-symfony/rules.neon
     - vendor/phpstan/phpstan-doctrine/extension.neon
     - vendor/phpstan/phpstan-doctrine/rules.neon
+    - vendor/spaze/phpstan-disallowed-calls/extension.neon
+    - vendor/spaze/phpstan-disallowed-calls/disallowed-execution-calls.neon
+    - vendor/spaze/phpstan-disallowed-calls/disallowed-dangerous-calls.neon
+    - vendor/spaze/phpstan-disallowed-calls/disallowed-insecure-calls.neon
 
 parameters:
     level: max
@@ -11,3 +15,10 @@ parameters:
         - tests
     symfony:
         containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml
+    # completes the shipped lists so that they cover disable_functions in the Dockerfile: keep the two in sync
+    disallowedFunctionCalls:
+        - function: 'chown()'
+        - function: 'chgrp()'
+        - function: 'lchown()'
+        - function: 'lchgrp()'
+        - function: 'chroot()'

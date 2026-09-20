@@ -10,6 +10,11 @@ COPY docker/php/app.ini $PHP_INI_DIR/conf.d/zz-app.ini
 COPY docker/php/www.conf /usr/local/etc/php-fpm.d/www.conf
 WORKDIR /app
 ENV APP_ENV=prod
+# Web requests can neither run a command, load native code nor change file ownership. The console keeps them.
+# Set when FPM starts, not with php_admin_value in the pool: there, functions are disabled after opcache is
+# loaded and calls reach the wrong function (measured: parse_url() ran stream_get_filters(), every route answered 500).
+# eval is a language construct, not a function: only the PHPStan rule in phpstan.dist.neon can ban it.
+CMD ["php-fpm", "-d", "disable_functions=exec,shell_exec,system,passthru,proc_open,popen,pcntl_exec,dl,putenv,chown,chgrp,lchown,lchgrp,chroot"]
 
 FROM base AS dev
 COPY --from=composer /usr/bin/composer /usr/local/bin/composer
@@ -29,4 +34,3 @@ COPY --chown=app:app --from=vendor /app/vendor vendor
 RUN install -d -o app -g app var
 USER 10001:10001
 RUN php bin/console cache:warmup
-CMD ["php-fpm"]

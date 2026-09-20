@@ -91,7 +91,7 @@ Ce qui est accepté :
 ## Tester
 
 ```bash
-make lint    # style du code et analyse statique (PHPStan, niveau max)
+make lint    # style du code, analyse statique (PHPStan, niveau max), fonctions interdites
 make test    # PHPUnit, contre une vraie MariaDB
 make audit   # recherche de failles dans les trois images (Trivy)
 ```
