@@ -1,0 +1,6 @@
+# Capacity measurements only: the per-address limits are lifted, because a load
+# generator sends the traffic of hundreds of clients from a single address.
+services:
+  nginx:
+    volumes:
+      - /dev/null:/etc/nginx/limits.conf:ro

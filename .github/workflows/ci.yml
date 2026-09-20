@@ -1,0 +1,63 @@
+name: ci
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    tags: ['v*']
+  schedule:
+    - cron: '0 6 * * 1'
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - run: make lint
+
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - run: make test
+
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: prod
+          tags: fizzbuzz-api:ci
+          outputs: type=docker,dest=/tmp/fizzbuzz-api.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - uses: actions/upload-artifact@v7
+        with:
+          name: image
+          path: /tmp/fizzbuzz-api.tar
+          retention-days: 1
+
+  security:
+    runs-on: ubuntu-24.04
+    needs: build
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: image
+          path: /tmp
+      - name: Trivy on the production image
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          input: /tmp/fizzbuzz-api.tar
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+      - name: Composer audit
+        run: docker run --rm -v "$PWD:/app" -w /app composer:2.8.12@sha256:5248900ab8b5f7f880c2d62180e40960cd87f60149ec9a1abfd62ac72a02577c composer audit --locked --no-interaction
+      - uses: hadolint/hadolint-action@v3.5.0
+        with:
+          dockerfile: Dockerfile

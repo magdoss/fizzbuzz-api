@@ -1,0 +1,53 @@
+nelmio_api_doc:
+    documentation:
+        info:
+            title: FizzBuzz API
+            description: Configurable fizz-buzz, and the most frequently requested parameters.
+            version: 1.0.0
+        servers:
+            - url: /
+              description: This server
+        components:
+            schemas:
+                Problem:
+                    type: object
+                    required: [type, title, status, detail]
+                    properties:
+                        type: { type: string, example: 'https://tools.ietf.org/html/rfc2616#section-10' }
+                        title: { type: string, example: An error occurred }
+                        status: { type: integer, example: 503 }
+                        detail: { type: string, example: Service Unavailable }
+                ValidationProblem:
+                    allOf:
+                        - $ref: '#/components/schemas/Problem'
+                        - type: object
+                          required: [violations]
+                          properties:
+                              violations:
+                                  type: array
+                                  items:
+                                      type: object
+                                      required: [propertyPath, message]
+                                      properties:
+                                          propertyPath: { type: string, example: limit }
+                                          message: { type: string, example: This value should be less than or equal to 100000. }
+            responses:
+                ValidationFailed:
+                    description: A parameter is missing, mistyped or out of range.
+                    content:
+                        application/problem+json:
+                            schema: { $ref: '#/components/schemas/ValidationProblem' }
+                TooManyRequests:
+                    description: More than 20 requests per second from the same address.
+                    content:
+                        application/problem+json:
+                            schema: { $ref: '#/components/schemas/Problem' }
+                ServiceUnavailable:
+                    description: The service or its statistics storage is unavailable.
+                    content:
+                        application/problem+json:
+                            schema: { $ref: '#/components/schemas/Problem' }
+    areas:
+        default:
+            path_patterns:
+                - '^/(fizzbuzz|statistics|health)$'
